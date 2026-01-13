@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { MemoryRouter as Router, Routes, Route, Link } from 'react-router-dom';
 import { Room, Booking, RoomType, User } from './types';
@@ -129,9 +128,21 @@ const App: React.FC = () => {
                   <p className="text-gc-green font-black mt-2">+66 123 456 789</p>
                 </div>
               </div>
-              <p className="text-[9px] font-bold uppercase tracking-[0.5em] opacity-20">
-                &copy; {new Date().getFullYear()} Green Curry Hostel &bull; Thailand &bull; All Rights Reserved
-              </p>
+              
+              <div className="flex flex-col items-center space-y-6">
+                <a 
+                  href="https://github.com/aztec-jt-dev/greencurryhostel" 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="flex items-center space-x-2 text-[10px] font-black uppercase tracking-widest text-white/20 hover:text-gc-green transition-colors group"
+                >
+                  <i className="fa-brands fa-github text-lg group-hover:scale-110 transition-transform"></i>
+                  <span>aztec-jt-dev / greencurryhostel</span>
+                </a>
+                <p className="text-[9px] font-bold uppercase tracking-[0.5em] opacity-20">
+                  &copy; {new Date().getFullYear()} Green Curry Hostel &bull; Thailand &bull; All Rights Reserved
+                </p>
+              </div>
             </div>
           </div>
         </footer>

@@ -4,6 +4,7 @@ import { Room, Booking } from '../types';
 import { COUNTRY_CODES } from '../constants';
 import MockStripe from './MockStripe';
 import { getTotalBookingPrice } from '../utils/pricing';
+import { sendMockConfirmationEmail } from '../utils/email';
 
 interface BookingModalProps {
   room: Room;
@@ -14,7 +15,10 @@ interface BookingModalProps {
 }
 
 const BookingModal: React.FC<BookingModalProps> = ({ room, bookings, onClose, onComplete, totalRooms }) => {
-  const [step, setStep] = useState<1 | 2 | 3>(1);
+  const [step, setStep] = useState<1 | 2 | 3 | 4>(1);
+  const [isSendingEmail, setIsSendingEmail] = useState(false);
+  const [finalBooking, setFinalBooking] = useState<Booking | null>(null);
+  
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -66,9 +70,9 @@ const BookingModal: React.FC<BookingModalProps> = ({ room, bookings, onClose, on
     }
   };
 
-  const handleFinish = () => {
+  const handlePaymentComplete = async () => {
     const newBooking: Booking = {
-      id: Math.random().toString(36).substr(2, 9),
+      id: Math.random().toString(36).substr(2, 9).toUpperCase(),
       roomId: room.id,
       guestName: formData.name,
       guestEmail: formData.email,
@@ -79,7 +83,14 @@ const BookingModal: React.FC<BookingModalProps> = ({ room, bookings, onClose, on
       notes: '',
       pricePaid: totalPrice
     };
-    onComplete(newBooking);
+    
+    setFinalBooking(newBooking);
+    setStep(4);
+    setIsSendingEmail(true);
+    
+    // Simulate email sending
+    await sendMockConfirmationEmail(newBooking, room);
+    setIsSendingEmail(false);
   };
 
   const renderCalendar = () => {
@@ -110,14 +121,18 @@ const BookingModal: React.FC<BookingModalProps> = ({ room, bookings, onClose, on
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-gc-dark/90 backdrop-blur-xl" onClick={onClose} />
+      <div className="absolute inset-0 bg-gc-dark/90 backdrop-blur-xl" onClick={step === 4 ? () => onComplete(finalBooking!) : onClose} />
       
       <div className="bg-gc-dark w-full max-w-lg rounded-[3rem] overflow-hidden shadow-[0_50px_100px_rgba(0,0,0,0.5)] relative border border-white/10">
-        <div className="p-8 bg-gc-green text-gc-dark flex justify-between items-center">
+        <div className={`p-8 ${step === 4 ? 'bg-gc-green text-gc-dark' : 'bg-white/5 text-white'} flex justify-between items-center transition-colors duration-500`}>
           <div>
-            <h2 className="text-2xl font-black italic uppercase tracking-tighter leading-none">Book <br/>{room.name.split(' ')[0]}</h2>
+            <h2 className="text-2xl font-black italic uppercase tracking-tighter leading-none">
+              {step === 4 ? 'Confirmed!' : `Book ${room.name.split(' ')[0]}`}
+            </h2>
           </div>
-          <button onClick={onClose} className="text-4xl leading-none font-bold hover:scale-125 transition-transform">&times;</button>
+          {step !== 4 && (
+            <button onClick={onClose} className="text-4xl leading-none font-bold hover:scale-125 transition-transform">&times;</button>
+          )}
         </div>
 
         <div className="p-10 max-h-[75vh] overflow-y-auto">
@@ -196,11 +211,6 @@ const BookingModal: React.FC<BookingModalProps> = ({ room, bookings, onClose, on
                       <span className="text-xs font-black uppercase opacity-30 italic">Total Payable</span>
                       <span className="text-4xl font-black text-white">{totalPrice} <span className="text-xs opacity-20">THB</span></span>
                    </div>
-                   {totalPrice > (room.basePrice * daysDiff) && (
-                     <div className="text-[10px] text-gc-orange font-black uppercase tracking-widest mt-4 animate-pulse">
-                        <i className="fa-solid fa-star mr-2"></i> Peak Season Pricing Applied
-                     </div>
-                   )}
                 </div>
               </div>
               
@@ -219,9 +229,51 @@ const BookingModal: React.FC<BookingModalProps> = ({ room, bookings, onClose, on
           {step === 3 && (
             <MockStripe 
               amount={totalPrice} 
-              onComplete={handleFinish} 
+              onComplete={handlePaymentComplete} 
               onBack={() => setStep(2)} 
             />
+          )}
+
+          {step === 4 && finalBooking && (
+            <div className="text-center py-6 animate-in fade-in zoom-in duration-700">
+              <div className="w-24 h-24 bg-gc-green rounded-full flex items-center justify-center mx-auto mb-8 shadow-[0_0_50px_rgba(142,198,63,0.4)]">
+                <i className="fa-solid fa-check text-4xl text-gc-dark"></i>
+              </div>
+              <h3 className="text-2xl font-black italic uppercase tracking-tighter mb-4">You're going to Chiang Mai!</h3>
+              
+              <div className="bg-white/5 border border-white/10 rounded-[2rem] p-6 mb-8 text-left">
+                <div className="flex justify-between items-center mb-4 border-b border-white/10 pb-4">
+                  <span className="text-[10px] font-black uppercase tracking-widest opacity-30">Confirmation ID</span>
+                  <span className="text-sm font-mono font-bold text-gc-green">{finalBooking.id}</span>
+                </div>
+                <div className="space-y-2">
+                  <p className="text-sm"><strong>Room:</strong> {room.name}</p>
+                  <p className="text-sm"><strong>Dates:</strong> {finalBooking.checkIn} to {finalBooking.checkOut}</p>
+                </div>
+              </div>
+
+              {isSendingEmail ? (
+                <div className="flex items-center justify-center space-x-3 text-gc-orange mb-10">
+                  <i className="fa-solid fa-paper-plane animate-bounce"></i>
+                  <span className="text-xs font-black uppercase tracking-widest">Sending confirmation email...</span>
+                </div>
+              ) : (
+                <div className="bg-gc-green/10 border border-gc-green/20 rounded-2xl p-4 mb-10 flex items-center space-x-4 animate-in slide-in-from-bottom-2">
+                  <i className="fa-solid fa-envelope-circle-check text-2xl text-gc-green"></i>
+                  <div className="text-left">
+                    <p className="text-[10px] font-black uppercase tracking-widest text-gc-green">Inbox Check</p>
+                    <p className="text-xs opacity-60">Confirmation sent to <strong>{formData.email}</strong></p>
+                  </div>
+                </div>
+              )}
+
+              <button 
+                onClick={() => onComplete(finalBooking)}
+                className="w-full bg-white text-gc-dark py-5 rounded-[2rem] font-black text-lg hover:bg-gc-green transition-all shadow-2xl"
+              >
+                CLOSE & VIEW DASHBOARD
+              </button>
+            </div>
           )}
         </div>
       </div>
