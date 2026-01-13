@@ -1,0 +1,24 @@
+# Spaceship Hyperlift Configuration for Green Curry Hostel
+
+[app]
+name = "greencurryhostel"
+region = "us-east-1"
+
+[build]
+dockerfile = "Dockerfile"
+context = "."
+
+[deploy]
+port = 3000
+health_check_path = "/health"
+health_check_interval = 30
+health_check_timeout = 5
+health_check_retries = 3
+
+[env]
+# Environment variables will be set via Spaceship dashboard or CLI
+# Required variables:
+# - DATABASE_URL
+# - GEMINI_API_KEY
+# - NODE_ENV (defaults to production)
+# - PORT (defaults to 3000, but Spaceship may override)

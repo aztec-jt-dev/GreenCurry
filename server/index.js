@@ -17,11 +17,23 @@ app.use(cors());
 app.use(express.json());
 
 // Database Connection
-const connectionString = 'postgresql://aztec_cloud_user:ycg8bBjkggSYPbwcuzHg4wfxeAFUO9rG@dpg-d5inptn5r7bs73di2iqg-a.virginia-postgres.render.com/aztec_cloud?ssl=true';
+const connectionString = process.env.DATABASE_URL || 'postgresql://aztec_cloud_user:ycg8bBjkggSYPbwcuzHg4wfxeAFUO9rG@dpg-d5inptn5r7bs73di2iqg-a.virginia-postgres.render.com/aztec_cloud?ssl=true';
 const pool = new Pool({
   connectionString,
   ssl: {
     rejectUnauthorized: false
+  }
+});
+
+// Health Check Endpoint
+app.get('/health', async (req, res) => {
+  try {
+    // Check database connection
+    await pool.query('SELECT 1');
+    res.status(200).json({ status: 'healthy', database: 'connected' });
+  } catch (err) {
+    console.error('Health check failed:', err);
+    res.status(503).json({ status: 'unhealthy', database: 'disconnected' });
   }
 });
 
@@ -32,10 +44,10 @@ app.post('/api/login', async (req, res) => {
   const { username, password } = req.body;
   try {
     const result = await pool.query(
-      'SELECT * FROM greencurry_users WHERE username = $1 AND password = $2', 
+      'SELECT * FROM greencurry_users WHERE username = $1 AND password = $2',
       [username, password]
     );
-    
+
     if (result.rows.length > 0) {
       const user = result.rows[0];
       res.json({ username: user.username, role: user.role });
@@ -113,11 +125,11 @@ app.post('/api/bookings', async (req, res) => {
 app.put('/api/bookings/:id', async (req, res) => {
   const { id } = req.params;
   const b = req.body; // updates
-  
+
   // Dynamic update query builder would be better, but for now we handle specific updates (mostly status/notes)
   // Or we can just do a simple patch for known fields.
   // The frontend calls `updateBooking(id, updates)`
-  
+
   try {
     // Construct query dynamically
     const fields = [];
@@ -133,7 +145,7 @@ app.put('/api/bookings/:id', async (req, res) => {
 
     values.push(id);
     const query = `UPDATE greencurry_bookings SET ${fields.join(', ')} WHERE id = $${idx}`;
-    
+
     await pool.query(query, values);
     res.json({ message: 'Booking updated' });
   } catch (err) {
