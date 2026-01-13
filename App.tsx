@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { MemoryRouter as Router, Routes, Route, Link } from 'react-router-dom';
 import { Room, Booking, RoomType, User } from './types';
-import { INITIAL_ROOMS } from './constants';
+import { api } from './utils/api';
 
 // Pages
 import HomePage from './pages/HomePage';
@@ -11,27 +11,52 @@ import AdminDashboardPage from './pages/AdminDashboardPage';
 import AiConciergePage from './pages/AiConciergePage';
 
 const App: React.FC = () => {
-  const [rooms] = useState<Room[]>(INITIAL_ROOMS);
-  const [bookings, setBookings] = useState<Booking[]>(() => {
-    const saved = localStorage.getItem('gc_bookings');
-    return saved ? JSON.parse(saved) : [];
-  });
+  const [rooms, setRooms] = useState<Room[]>([]);
+  const [bookings, setBookings] = useState<Booking[]>([]);
   const [user, setUser] = useState<User | null>(null);
 
+  const fetchData = async () => {
+    try {
+      const [fetchedRooms, fetchedBookings] = await Promise.all([
+        api.getRooms(),
+        api.getBookings()
+      ]);
+      setRooms(fetchedRooms);
+      setBookings(fetchedBookings);
+    } catch (err) {
+      console.error("Failed to fetch data", err);
+    }
+  };
+
   useEffect(() => {
-    localStorage.setItem('gc_bookings', JSON.stringify(bookings));
-  }, [bookings]);
+    fetchData();
+  }, []);
 
-  const addBooking = (booking: Booking) => {
-    setBookings(prev => [...prev, booking]);
+  const addBooking = async (booking: Booking) => {
+    try {
+      await api.createBooking(booking);
+      fetchData(); // Refresh data
+    } catch (err) {
+      alert("Failed to create booking");
+    }
   };
 
-  const updateBooking = (id: string, updates: Partial<Booking>) => {
-    setBookings(prev => prev.map(b => b.id === id ? { ...b, ...updates } : b));
+  const updateBooking = async (id: string, updates: Partial<Booking>) => {
+    try {
+      await api.updateBooking(id, updates);
+      fetchData();
+    } catch (err) {
+      alert("Failed to update booking");
+    }
   };
 
-  const deleteBooking = (id: string) => {
-    setBookings(prev => prev.filter(b => b.id !== id));
+  const deleteBooking = async (id: string) => {
+    try {
+      await api.deleteBooking(id);
+      fetchData();
+    } catch (err) {
+      alert("Failed to delete booking");
+    }
   };
 
   const login = (u: User) => setUser(u);

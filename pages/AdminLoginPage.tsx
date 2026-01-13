@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ADMIN_CREDENTIALS } from '../constants';
+import { api } from '../utils/api';
 import { User } from '../types';
 
 interface AdminLoginPageProps {
@@ -14,13 +14,14 @@ const AdminLoginPage: React.FC<AdminLoginPageProps> = ({ onLogin }) => {
   const [error, setError] = useState('');
   const navigate = useNavigate();
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (username === ADMIN_CREDENTIALS.username && password === ADMIN_CREDENTIALS.password) {
-      onLogin({ username, role: 'admin' });
+    try {
+      const user = await api.login({ username, password });
+      onLogin(user);
       navigate('/admin');
-    } else {
-      setError('Invalid credentials. Please use admin / strong_password');
+    } catch (err) {
+      setError('Invalid credentials.');
     }
   };
 

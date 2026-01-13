@@ -178,7 +178,7 @@ const AdminDashboardPage: React.FC<AdminDashboardProps> = ({ rooms, bookings, on
         </div>
         <div className="bg-white/5 border border-white/10 p-8 rounded-[2.5rem] backdrop-blur-xl group hover:border-gc-green transition-all flex flex-col justify-center">
            <div className="text-[10px] font-black uppercase text-gc-green tracking-widest mb-1">Pricing Engine</div>
-           <p className="text-[11px] opacity-40 font-medium">Automatic multipliers active for occupancy > 80%</p>
+           <p className="text-[11px] opacity-40 font-medium">Automatic multipliers active for occupancy &gt; 80%</p>
         </div>
       </div>
 
