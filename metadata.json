@@ -1,7 +1,5 @@
 {
   "name": "Green Curry Hostel - Boutique Chiang Mai",
   "description": "Premium solo-traveler booking engine with AI concierge and smart dynamic pricing.",
-  "requestFramePermissions": [
-    "microphone"
-  ]
+  "requestFramePermissions": []
 }
