@@ -33,11 +33,12 @@ We've created a `render.yaml` file that automates everything!
 5. **Click "Apply"**
 
 Render will automatically:
-- ✅ Create PostgreSQL database
 - ✅ Create web service
 - ✅ Build Docker image
-- ✅ Link database to app
+- ✅ Connect to your existing PostgreSQL database (aztec_cloud)
 - ✅ Deploy everything
+
+**Note**: The blueprint is configured to use your existing Render PostgreSQL database at `dpg-d5inptn5r7bs73di2iqg-a.virginia-postgres.render.com`
 
 ---
 
@@ -58,14 +59,10 @@ The app will automatically redeploy.
 
 ### Step 4: Initialize Database Tables
 
-Get your database connection string:
-
-1. Go to **Dashboard** → **greencurryhostel-db** (PostgreSQL)
-2. Copy the **"External Database URL"**
-3. Run the setup script locally:
+Run the setup script with your existing database:
 
 ```bash
-DATABASE_URL="your_database_url_here" node scripts/setup-db-render.js
+DATABASE_URL="postgresql://aztec_cloud_user:ycg8bBjkggSYPbwcuzHg4wfxeAFUO9rG@dpg-d5inptn5r7bs73di2iqg-a.virginia-postgres.render.com/aztec_cloud" node scripts/setup-db-render.js
 ```
 
 This creates:
